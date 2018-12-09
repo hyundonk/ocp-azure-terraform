@@ -1,0 +1,52 @@
+location = "<enter target azure region>"
+subscription_id = "<enter your subscription ID>"
+
+# backend storage access key
+tfbackend_storageaccount = "<enter azure storage account name>" 
+
+access_key = "<enter your azure storage access key>"
+
+# URL for RHEL7.5 OS disk image (vhd)
+image_path = "<enter RHEL OS vhd path>"
+
+# Set prefix for resource names
+prefix = "<enter prefix for naming>"
+
+resourcegroup_name_network = "<enter resource group name for network resources>"
+resourcegroup_name_cluster = "<enter resource group name for VM resources>"
+
+# Set Load Balancer frontend IPs
+internallb_masterIP = "<enter internal LB IP for master VMs>"
+internallb_routerIP = "<enter router LB IP for router VMs>"
+
+# Set VM sizes
+
+vmsize_master = "Standard_D8s_v3" # D8s_v3
+vmsize_infra = "Standard_D8s_v3" #D8s_v3
+vmsize_router = "Standard_D4s_v3" #D4s_v3
+vmsize_app = "Standard_D8s_v3" #D8s_v3
+vmsize_bastion = "Standard_D4s_v3" #D4s_v3
+
+# Set number of VMs for each role
+vmnum_master = 3
+vmnum_infra = 2
+vmnum_router = 3
+vmnum_app = 2
+
+# Set admin username & password
+adminUsername = "<enter adminUsername for VMs>"
+adminPassword = "<enter adminPassword for VMs>"
+
+bastion_private_IP = "<enter private IP for bastion VM>"
+
+# DNS zone name
+dnszone_name = "<enter DNS zone name for OCP cluster>"
+
+# VPN connection shared key
+shared_key = "<enter VPN connection shared key>"
+
+address_space_SZDC = [<enter address spaces>]
+gateway_address_SZDC = "<enter public IP address of remote gateway>"    
+
+
+
