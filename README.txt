@@ -70,7 +70,8 @@ Note:
  $ terraform plan -var-file=../terraform.tfvars
  $ terraform apply -var-file=../terraform.tfvars 
 
-
+Note) 
+There are cases to add variables on existing module to refer them from other modules. To add output variable on existing terraform modules without applying it, use "terrafrom refresh" instead of "terraform apply".
 
 
 
