@@ -1,5 +1,6 @@
 ###################################################################################
 # Terraform script for adding app-03 VM 2019.01.02
+# 20190103 added app-04 VM also 
 
 variable "location" {}
 variable "subscription_id" {}
@@ -13,6 +14,7 @@ variable "resourcegroup_name_cluster" {}
 variable "prefix" {}
 
 variable "vmsize_app03" {}
+variable "vmsize_app04" {}
 
 variable "adminUsername" {}
 variable "adminPassword" {}
@@ -116,5 +118,63 @@ resource "azurerm_virtual_machine" "app-03" {
     }
 
     network_interface_ids = ["${azurerm_network_interface.app-03.id}"]
+}
+
+resource "azurerm_network_interface" "app-04" {
+    name                = "${format("%s-app-04-nic", var.prefix)}"
+    location            = "${var.location}"
+    resource_group_name  = "${var.resourcegroup_name_cluster}"
+    
+    ip_configuration {
+        name = "${join("", list("ipconfig", "0"))}"
+        subnet_id = "${data.terraform_remote_state.network.subnet_intsub01_id}"
+        private_ip_address_allocation = "static"
+        private_ip_address = "10.250.0.34"
+    }
+
+    internal_dns_name_label = "ocp-app-4"
+    network_security_group_id = "${data.terraform_remote_state.network.nsg_app_id}"
+    enable_accelerated_networking = "true"
+}
+
+resource "azurerm_virtual_machine" "app-04" {
+    name                  = "${format("%s-app-04", var.prefix)}"
+    location              = "${var.location}"
+    resource_group_name  = "${var.resourcegroup_name_cluster}"
+    vm_size               = "${var.vmsize_app04}"
+    
+    availability_set_id = "${data.terraform_remote_state.cluster.app_avset_id}"
+
+    storage_image_reference {
+        id = "${data.terraform_remote_state.cluster.rhel75_image_id}"
+    }
+
+    storage_os_disk {
+        name          = "${format("%s-app-04-osdisk", var.prefix)}"
+        caching       = "ReadWrite"
+        create_option = "FromImage"
+        managed_disk_type = "Standard_LRS"
+        disk_size_gb = "127"
+    }
+    
+    storage_data_disk {
+        name          = "${format("%s-app-04-datadisk", var.prefix)}"
+        managed_disk_type       = "Standard_LRS"
+        create_option = "Empty"
+        lun = 0
+        disk_size_gb = "256"
+    }
+    
+    os_profile {
+        computer_name  = "${format("%s-app-04", var.prefix)}"
+        admin_username = "${var.adminUsername}"
+        admin_password = "${var.adminPassword}"
+    }
+
+    os_profile_linux_config {
+        disable_password_authentication = false
+    }
+
+    network_interface_ids = ["${azurerm_network_interface.app-04.id}"]
 }
 
