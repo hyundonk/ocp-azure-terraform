@@ -538,7 +538,7 @@ resource "azurerm_virtual_machine" "app" {
         managed_disk_type = "Standard_LRS"
         disk_size_gb = "127"
     }
-    
+   
     storage_data_disk {
         name          = "${format("%s-app-%02d-datadisk", var.prefix, count.index + 1)}"
         managed_disk_type       = "Standard_LRS"
@@ -546,7 +546,7 @@ resource "azurerm_virtual_machine" "app" {
         lun = 0
         disk_size_gb = "256"
     }
-    
+ 
     os_profile {
         computer_name  = "${format("%s-app-%02d", var.prefix, count.index + 1)}"
         admin_username = "${var.adminUsername}"
@@ -642,3 +642,13 @@ output "master_public_ip_address" {
 output "router_network_interface_ids" {
     value = ["${azurerm_network_interface.router.*.id}"]
 }
+
+output "rhel75_image_id" {
+    value = "${azurerm_image.image.id}"
+}
+
+output "app_avset_id" {
+    value = "${azurerm_availability_set.app.id}"
+}
+
+
