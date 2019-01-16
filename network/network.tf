@@ -91,6 +91,14 @@ resource "azurerm_subnet" "dmzsub01" {
     address_prefix       = "10.250.2.0/24"
 }
 
+resource "azurerm_subnet" "appgwsubnet" {
+    name                      = "ddp-appgw"
+    resource_group_name       = "${azurerm_resource_group.network.name}"
+    virtual_network_name      = "${azurerm_virtual_network.vnet.name}"
+    address_prefix       = "10.250.6.0/24"
+}
+
+
 # Network Security Groups
 #  bastion-nsg
 #  master-nsg
@@ -604,6 +612,11 @@ output "subnet_dmzsub01_id" {
 output "subnet_gatewaysubnet_id" {
       value = "${azurerm_subnet.GatewaySubnet.id}"
 }
+
+output "subnet_appgwsubnet_id" {
+      value = "${azurerm_subnet.appgwsubnet.id}"
+}
+
 
 output "nsg_bastion_id" {
       value = "${azurerm_network_security_group.nsg-bastion.id}"
