@@ -17,6 +17,9 @@ variable "resourcegroup_name_network" {}
 variable "internallb_masterIP" {}
 variable "internallb_routerIP" {}
  
+variable "sqlmi_subnet_nsg_id" {}
+variable "sqlmi_subnet_rt_id" {}
+
 provider "azurerm" {
 	subscription_id = "${var.subscription_id}"
 }
@@ -65,7 +68,10 @@ resource "azurerm_subnet" "intsub02" {
     resource_group_name  = "${azurerm_resource_group.network.name}"
     virtual_network_name = "${azurerm_virtual_network.vnet.name}"
     address_prefix       = "10.250.3.0/24"
-    #network_security_group_id = "${azurerm_network_security_group.nsg-intsub01.id}"
+
+    # add NSG ID and RT ID which was created without terraform
+    network_security_group_id = "${var.sqlmi_subnet_nsg_id}"
+    route_table_id = "${var.sqlmi_subnet_rt_id}"
 }
 
 resource "azurerm_subnet" "extsub01" {
