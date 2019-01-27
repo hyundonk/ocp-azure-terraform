@@ -12,11 +12,9 @@ variable "prefix" {}
 
 variable "access_key" {}
 
-variable "appgw_site1_hostname" {}
+variable "vmnum_router" {}
 
-variable "appgw_backend_address_pool_ip_address_list" {
-    type = "list"
-}
+variable "appgw_site1_hostname" {}
 
 variable "appgw_site1_ssl_cert_password" {}
 
@@ -60,14 +58,12 @@ data "terraform_remote_state" "cluster" {
 }
 
 # Create Application Gateway
-
 resource "azurerm_public_ip" "pip_appgw" {
     name                  = "${format("%s-appgw-pip", var.prefix)}"
     location            = "${var.location}"
     resource_group_name  = "${var.resourcegroup_name_cluster}"
     allocation_method = "Dynamic"
 }
-
 
 resource "azurerm_application_gateway" "appgw" {
     name                = "${format("%s-appgw", var.prefix)}"
@@ -85,19 +81,25 @@ resource "azurerm_application_gateway" "appgw" {
     }  
 
     frontend_port {
-	    name = "appGatewayFrontendPort" 
+	    name = "appGatewayFrontendPortHttps" 
 	    port = "443" 
     }
 
+    frontend_port {
+	    name = "appGatewayFrontendPortHttp" 
+	    port = "80" 
+    }
+
+
     frontend_ip_configuration {
-	    name = "appGatewayFrontendIP" 
+	    name = "doosan-iv-frontendip" 
 	    private_ip_address_allocation  = "Dynamic" 
-        public_ip_address_id = "${azurerm_public_ip.pip_appgw.id}"
+        subnet_id = "${data.terraform_remote_state.network.subnet_appgwsubnet_id}"
+#       public_ip_address_id = "${azurerm_public_ip.pip_appgw.id}"
     }
 
     backend_address_pool {
-	    name = "appGatewayBackendPool" 
-        ip_address_list = "${var.appgw_backend_address_pool_ip_address_list}"
+	    name = "doosan-iv-https-listener-pool" 
     }
 
     backend_http_settings {
@@ -110,29 +112,47 @@ resource "azurerm_application_gateway" "appgw" {
     }
 
     http_listener {
-	    name = "appGatewayHttpListener" 
-	    frontend_ip_configuration_name = "appGatewayFrontendIP" 
-	    frontend_port_name = "appGatewayFrontendPort" 
+	    name = "doosan-iv-https-listener" 
+	    frontend_ip_configuration_name = "doosan-iv-frontendip" 
+	    frontend_port_name = "appGatewayFrontendPortHttps" 
 	    protocol = "Https" 
         ssl_certificate_name = "${var.appgw_site1_hostname}"
 	    require_sni = "false" 
+        host_name = "os-dev.doosan-iv.com"
+    }
+
+    http_listener {
+	    name = "doosan-iv-http-listener" 
+	    frontend_ip_configuration_name = "doosan-iv-frontendip" 
+	    frontend_port_name = "appGatewayFrontendPortHttp" 
+	    protocol = "Http" 
+        host_name = "os-dev.doosan-iv.com"
     }
 
     request_routing_rule {
-	    name = "rule1" 
+	    name = "ruleHttps" 
         rule_type                  = "Basic"
-	    http_listener_name = "appGatewayHttpListener" 
-	    backend_address_pool_name = "appGatewayBackendPool" 
+	    http_listener_name = "doosan-iv-https-listener" 
+	    backend_address_pool_name = "doosan-iv-https-listener-pool" 
 	    backend_http_settings_name = "appGatewayBackendHttpSettings" 
     }
 
-    ssl_certificate {
-            name = "${var.appgw_site1_hostname}"
-            #data = "${base64encode(file("${format("./WILD.%s.pfx", var.appgw_site1_hostname)}"))}"
-            data = "${base64encode(file("appgwcert.pfx"))}"
-            password = "${var.appgw_site1_ssl_cert_password}"
+    request_routing_rule {
+	    name = "ruleHttp" 
+        rule_type                  = "Basic"
+	    http_listener_name = "doosan-iv-http-listener" 
+	    backend_address_pool_name = "doosan-iv-https-listener-pool" 
+	    backend_http_settings_name = "appGatewayBackendHttpSettings" 
     }
 
+
+    ssl_certificate {
+            name = "${var.appgw_site1_hostname}"
+            data = "${base64encode(file("${format("./WILD.%s.pfx", var.appgw_site1_hostname)}"))}"
+            #data = "${base64encode(file("appgwcert.pfx"))}"
+            password = "${var.appgw_site1_ssl_cert_password}"
+    }
+    
     waf_configuration {
         enabled          = "true"
         firewall_mode    = "Detection"
@@ -144,10 +164,20 @@ resource "azurerm_application_gateway" "appgw" {
         name            = "${format("probe-%s", var.appgw_site1_hostname)}"
         protocol            = "http"
         path                = "/"
-        host                = "${format("www.%s", var.appgw_site1_hostname)}"
+        host                = "os-dev.doosan-iv.com"
+        #host                = "${format("www.%s", var.appgw_site1_hostname)}"
         interval            = "30"
         timeout             = "30"
         unhealthy_threshold = "3"
     }
 }
+
+resource "azurerm_network_interface_application_gateway_backend_address_pool_association" "master" {
+    network_interface_id    = "${data.terraform_remote_state.cluster.router_network_interface_ids[count.index]}"
+    ip_configuration_name = "${join("", list("ipconfig", "0"))}"
+    backend_address_pool_id = "${azurerm_application_gateway.appgw.backend_address_pool.0.id}"
+
+    count = "${var.vmnum_router}"
+}
+
 
