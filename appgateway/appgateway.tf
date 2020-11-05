@@ -112,36 +112,36 @@ resource "azurerm_application_gateway" "appgw" {
     }
 
     http_listener {
-	    name = "doosan-iv-https-listener" 
-	    frontend_ip_configuration_name = "doosan-iv-frontendip" 
+	    name = "example-https-listener" 
+	    frontend_ip_configuration_name = "example-frontendip" 
 	    frontend_port_name = "appGatewayFrontendPortHttps" 
 	    protocol = "Https" 
         ssl_certificate_name = "${var.appgw_site1_hostname}"
 	    require_sni = "false" 
-        host_name = "os-dev.doosan-iv.com"
+        host_name = "os-dev.example.com"
     }
 
     http_listener {
 	    name = "doosan-iv-http-listener" 
-	    frontend_ip_configuration_name = "doosan-iv-frontendip" 
+	    frontend_ip_configuration_name = "example-frontendip" 
 	    frontend_port_name = "appGatewayFrontendPortHttp" 
 	    protocol = "Http" 
-        host_name = "os-dev.doosan-iv.com"
+        host_name = "os-dev.example.com"
     }
 
     request_routing_rule {
 	    name = "ruleHttps" 
         rule_type                  = "Basic"
-	    http_listener_name = "doosan-iv-https-listener" 
-	    backend_address_pool_name = "doosan-iv-https-listener-pool" 
+	    http_listener_name = "example-https-listener" 
+	    backend_address_pool_name = "example-https-listener-pool" 
 	    backend_http_settings_name = "appGatewayBackendHttpSettings" 
     }
 
     request_routing_rule {
 	    name = "ruleHttp" 
         rule_type                  = "Basic"
-	    http_listener_name = "doosan-iv-http-listener" 
-	    backend_address_pool_name = "doosan-iv-https-listener-pool" 
+	    http_listener_name = "example-http-listener" 
+	    backend_address_pool_name = "example-https-listener-pool" 
 	    backend_http_settings_name = "appGatewayBackendHttpSettings" 
     }
 
@@ -164,7 +164,7 @@ resource "azurerm_application_gateway" "appgw" {
         name            = "${format("probe-%s", var.appgw_site1_hostname)}"
         protocol            = "http"
         path                = "/"
-        host                = "os-dev.doosan-iv.com"
+        host                = "os-dev.example.com"
         #host                = "${format("www.%s", var.appgw_site1_hostname)}"
         interval            = "30"
         timeout             = "30"
